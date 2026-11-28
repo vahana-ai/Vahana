@@ -81,4 +81,6 @@ The second cell downloads about 35 GB and runs for about an hour. The models go 
 - **First run.** Vahana did not start in this container at first: Kaggle forbids the `set_mempolicy` call it uses to switch off NUMA balancing, as Docker's default profile does. That is fixed in 1.4.0; the call is now a hint, so a refusal is logged and the run continues.
 - **Exactness held.** `vahana selftest --device cpu` gave the reference machine's bits on all 18 families here.
 
+**Mixtral-8x7B on a free Colab T4 (12.7 GB RAM): not measurable there.** Both 4-bit files are about twice the RAM (Vahana's 24.5 GB, llama.cpp's 28.4 GB), so both engines read weights from disk on nearly every token. llama.cpp's best setting reached only 0.17 tok/s (`--n-cpu-moe 16 -t 2`; fewer CPU layers did not fit the GPU). The two head-to-heads did not finish within the scripts' time limits, and Colab recycled the runtime before the logs could be read, so there is no Vahana number. A fair Mixtral comparison needs about 32 GB of RAM (Kaggle's T4 machines have 31 GB); that run is pending.
+
 **Quality against the bf16 original** (the same on any machine): Vahana's 4-bit has mean KL divergence 0.065 against llama.cpp Q4_K_M's 0.093. See [experiments/v15_quality](../v15_quality/README.md).

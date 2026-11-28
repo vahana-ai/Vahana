@@ -276,14 +276,26 @@ print("\nbenchmark text (decode after a 512-token prompt)", flush=True)
 f1 = os.path.join(RES, "benchmark_text.json")
 r = run([sys.executable, os.path.join(EXP, "v15_decode", "head_to_head.py"), "--vahana-model", vdir, "--gguf", gguf,
          *llama_args, "--blocks", a.blocks, "--runs", "3", "--out", f1], log="benchmark_text.log")
-if os.path.exists(f1):
+def failed(log):
+    """A head-to-head that wrote no results: show why, so a failure is never silent."""
+    tail = (r.stdout + "\n" + r.stderr).strip().splitlines()[-12:]
+    print(f"  FAILED (exit {r.returncode}); full log: {os.path.join(RES, log)}", flush=True)
+    for line in tail:
+        print("    " + line, flush=True)
+
+
+if not os.path.exists(f1):
+    failed("benchmark_text.log")
+else:
     out["benchmark_text"] = {k: v for k, v in json.load(open(f1)).items() if k not in ("llama.cpp", "vahana")} | {
         e: {x: y for x, y in json.load(open(f1))[e].items() if x != "runs"} for e in ("llama.cpp", "vahana")}
 print("real prompts (decode and time to first token)", flush=True)
 f2 = os.path.join(RES, "real_prompts.json")
 r = run([sys.executable, os.path.join(EXP, "v15_decode", "real_prompts_h2h.py"), "--vahana-model", vdir, "--gguf", gguf,
          *llama_args, "--blocks", a.blocks, "--out", f2], log="real_prompts.log")
-if os.path.exists(f2):
+if not os.path.exists(f2):
+    failed("real_prompts.log")
+else:
     d = json.load(open(f2))
     out["real_prompts"] = {k: v for k, v in d.items() if k not in ("llama.cpp", "vahana")} | {
         e: {x: y for x, y in d[e].items() if x != "runs"} for e in ("llama.cpp", "vahana")}
